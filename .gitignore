@@ -1,0 +1,10 @@
+# 中间版本 / 历史产物（最终发布版不包含）
+/little-planet/
+/preview/
+/赛博小星球-8083离线版.html
+/赛博小星球-DS5离线版.html
+/backups/
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
