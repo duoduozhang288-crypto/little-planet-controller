@@ -9,12 +9,29 @@
 | 👥 **双人合作模式** | 一块屏幕分给两位玩家（P1 键鼠 + P2 手柄），独立存档、互相报方位，还有汇总板 / 速度赛 / 信标三种玩法面板 |
 | 🎮 **PS5 DualSense 深度适配** | 输入映射、事件震动、灯条配色、自适应扳机，全部通过 WebHID 实现 |
 | ☀️ **一键昼夜切换** | 同一座岛两套时间，白天版按官方昼夜配色逐项映射生成，切换不丢进度 |
+| 🪐 **赛博星球** | 100 万顶点高精度星球模型替换地表，运行时一键切换昼夜（不重载），单人双人都支持 |
 
 游戏打开后，右上角有 **「👥 双人模式」** 按钮，点一下即进入双人合作版 —— 不需要记任何地址。
 
 ---
 
-## 如何启动游戏
+## 🌐 在线即玩（无需安装）
+
+**👉 https://duoduozhang288-crypto.github.io/little-planet-controller/**
+
+| 页面 | 地址 |
+| --- | --- |
+| 🌙 单人 · 原版星球 | [打开](https://duoduozhang288-crypto.github.io/little-planet-controller/) |
+| ☀️ 单人 · 原版白天 | [打开](https://duoduozhang288-crypto.github.io/little-planet-controller/?theme=day) |
+| 🪐 **单人 · 赛博星球** | [打开](https://duoduozhang288-crypto.github.io/little-planet-controller/?planet=cyber) |
+| 👥 双人 · 赛博星球 | [打开](https://duoduozhang288-crypto.github.io/little-planet-controller/duo.html?planet=cyber) |
+
+> 首次进入赛博星球需要下载约 57MB 的高精度模型，加载时有进度遮罩，之后浏览器会缓存。
+> 在线版手柄适配（WebHID）需要 Chrome / Edge 浏览器；键鼠在所有现代浏览器可用。
+
+---
+
+## 如何启动游戏（本地版）
 
 需要 [Node.js](https://nodejs.org)（建议 18 以上），**不需要 npm install**，服务器零第三方依赖。
 
@@ -36,7 +53,9 @@ node server/server.js
 | --- | --- |
 | 🌙 单人模式（默认夜晚） | `http://localhost:8765/` |
 | ☀️ 单人模式 · 白天 | `http://localhost:8765/?theme=day` |
+| 🪐 单人 · 赛博星球 | `http://localhost:8765/?planet=cyber` |
 | 👥 **双人合作模式** | `http://localhost:8765/duo.html` |
+| 👥🪐 双人 · 赛博星球 | `http://localhost:8765/duo.html?planet=cyber` |
 | 🔍 手柄适配自检（39 项） | `http://localhost:8765/bridge/ds5-selftest.html` |
 | 🔍 双人分屏自检（52 项） | `http://localhost:8765/bridge/duo-selftest.html` |
 
@@ -163,6 +182,46 @@ http://localhost:8765/bridge/duo-selftest.html
 
 ---
 
+## 🪐 赛博星球（高精度模型）
+
+在原版星球之外，还可以切换到一颗 **100 万顶点 / 189 万三角面** 的高精度赛博星球
+（模型已离线贴合到角色行走球面，角色、碰撞、寻路、交互点全部沿用原游戏逻辑）。
+
+**入口**：任意页面右上角的「🪐 赛博星球」按钮，点击后整页重载，**手记进度不丢**；
+在赛博星球里同一个按钮变成「🪐 原版星球」，一键切回。
+
+| 页面 | 地址 |
+| --- | --- |
+| 单人 · 赛博星球 | `http://localhost:8765/?planet=cyber` |
+| 双人 · 赛博星球 | `http://localhost:8765/duo.html?planet=cyber` |
+
+赛博星球自带**运行时昼夜切换**（不重载页面）：
+
+- **单人**：右上角「☀️ / 🌙」按钮同时切换贴图、灯光、天空渐变与大气雾
+- **双人**：顶栏按钮**同时**切换两个座位的昼夜，按钮文字实时同步
+- 白天还有三套日光贴图可选（A 清晨微冷 / B 正午晴日 / C 午后暖阳），默认 A
+
+实现原则与整套工程一致：**游戏本体零改动** —— 赛博星球是副本 bundle
+（`assets/index-cyber-*.js`，仅多 51 字节场景钩子）+ 集成层
+（`integration/cyber-planet.js` 隐藏原地表并摆放模型、`integration/daylight-mode.js`
+运行时昼夜）。模型与工具链见 [`docs/MODEL.md`](docs/MODEL.md) 与
+[`docs/DAYLIGHT.md`](docs/DAYLIGHT.md)。
+
+### URL 参数速查
+
+| 参数 | 作用 |
+| --- | --- |
+| （无） | 原版星球 · 夜晚 |
+| `?theme=day` | 原版星球 · 白天（整页重载切换） |
+| `?planet=cyber` | 赛博星球（默认白天） |
+| `?planet=cyber&mode=night` | 赛博星球 · 夜景 |
+| `?planet=cyber&day=B` | 赛博星球 · 指定白天贴图（A / B / C） |
+| `?seat=1` / `?seat=2` | 双人模式座位（由 duo.html 自动附加） |
+
+参数可组合：`duo.html?planet=cyber` 会把星球参数转发给两个座位。
+
+---
+
 ## 后端怎么接
 
 后端只需要向一个地址 POST JSON。完整字段说明见 [`docs/PROTOCOL.md`](docs/PROTOCOL.md)。
@@ -217,12 +276,21 @@ little-planet-controller/
 │   │   ├── duo-seat.js           双人座位接线（存档隔离 / 手柄来源 / 键盘防护）
 │   │   ├── duo-modes.js          双人玩法面板（汇总板 / 速度赛 / 信标）
 │   │   ├── duo-entry.js          双人模式入口按钮（单人页右上角）
-│   │   ├── day-night.js          昼夜切换按钮（单人页右上角）
+│   │   ├── day-night.js          昼夜切换按钮（单人页右上角，按星球分流）
+│   │   ├── planet-switch.js      星球切换按钮（原版 ↔ 赛博星球）
 │   │   ├── ds5-selftest.html     手柄适配自检页，39 项断言
 │   │   └── duo-selftest.html     双人分屏自检页，52 项断言
+│   ├── integration/              赛博星球集成层（游戏本体零改动）
+│   │   ├── cyber-planet.js       隐藏原地表 + 加载 GLB 模型（esbuild 打包版）
+│   │   ├── cyber-planet-source.js 集成层源码（175 行，注释完整）
+│   │   └── daylight-mode.js      赛博星球运行时昼夜切换（贴图/灯光/天空/雾）
+│   ├── models/
+│   │   └── cyber-planet.glb      赛博星球高精度模型（约 57MB，100 万顶点）
+│   ├── textures/                 赛博星球白天贴图（A / B / C 三套日光色）
 │   └── assets/                   游戏本体与 Three.js 渲染库
 │       ├── index-CS6g4Xtd.js     游戏逻辑（夜晚版，官方原文件）
 │       ├── index-day-CS6g4Xtd.js 游戏逻辑（白天版，按官方昼夜配色映射生成）
+│       ├── index-cyber-CS6g4Xtd.js 赛博星球副本（多 51 字节场景钩子）
 │       ├── index-CundtmH4.css    样式（夜晚版）
 │       ├── index-day-CundtmH4.css 样式（白天版）
 │       └── three-gtj_l2uB.js     三维渲染库
