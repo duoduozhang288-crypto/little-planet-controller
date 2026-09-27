@@ -179,6 +179,7 @@
       <div class="tools">
         <span class="pads" id="pad-status">检测手柄…</span>
         <a href="./" id="btn-solo" title="回到单人模式">单人模式</a>
+        <button id="btn-planet" title="切换星球（两个画面同时切换，进度不丢）">🪐 赛博星球</button>
         <button id="btn-theme" title="两个画面同时切换昼夜（重载画面，进度不丢）">☀️ 白天</button>
         <button id="btn-layout">上下布局</button>
         <button id="btn-help">操作说明</button>
@@ -241,24 +242,57 @@
         var stage = document.getElementById("stage");
 
         /* ============================================================
-         * 0. 昼夜主题：宿主的 ?theme 决定两个座位加载哪套资源
+         * 0. 昼夜主题与星球选择：宿主 URL 决定两个座位加载什么
+         *    - 原版星球：?theme=day 换白天版资源，整页重载
+         *    - 赛博星球：?planet=cyber 加载 GLB 模型 + 运行时昼夜切换
          * ============================================================ */
-        var day = new URLSearchParams(location.search).get("theme") === "day";
+        var hostParams = new URLSearchParams(location.search);
+        var day = hostParams.get("theme") === "day";
+        var cyber = hostParams.get("planet") === "cyber";
         var themeParam = day ? "&theme=day" : "";
-        frame1.src = "./index.html?seat=1" + themeParam;
-        frame2.src = "./index.html?seat=2" + themeParam;
+        var planetParam = cyber ? "&planet=cyber" : "";
+        frame1.src = "./index.html?seat=1" + themeParam + planetParam;
+        frame2.src = "./index.html?seat=2" + themeParam + planetParam;
         var btnTheme = document.getElementById("btn-theme");
-        btnTheme.textContent = day ? "🌙 夜晚" : "☀️ 白天";
-        if (day) {
-          var themeMeta = document.querySelector('meta[name="theme-color"]');
-          if (themeMeta) themeMeta.setAttribute("content", "#d4e8d0");
-        }
-        btnTheme.addEventListener("click", function () {
+        var btnPlanet = document.getElementById("btn-planet");
+        btnPlanet.textContent = cyber ? "🪐 原版星球" : "🪐 赛博星球";
+        btnPlanet.title = cyber
+          ? "回到原版星球（切换会重新加载两个画面，进度不丢）"
+          : "前往赛博星球（高精度模型，首次加载 57MB 需等待，进度不丢）";
+        btnPlanet.addEventListener("click", function () {
           var params = new URLSearchParams(location.search);
-          if (params.get("theme") === "day") params.delete("theme");
-          else params.set("theme", "day");
-          location.search = params.toString(); /* 整页重载，两个画面同时换主题 */
+          if (params.get("planet") === "cyber") params.delete("planet");
+          else params.set("planet", "cyber");
+          location.search = params.toString(); /* 整页重载，两个画面同时换星球 */
         });
+        if (cyber) {
+          /* 赛博星球的昼夜由座位里的 daylight-mode.js 运行时切换，
+             不重载：两个座位一起 toggle，按钮文字跟着帧内状态走。 */
+          btnTheme.textContent = "🌙 夜晚";
+          btnTheme.addEventListener("click", function () {
+            [frame1, frame2].forEach(function (f) {
+              var w = f.contentWindow;
+              if (w && w.LPDaylight) w.LPDaylight.toggle();
+            });
+          });
+          setInterval(function () {
+            var w = frame1.contentWindow;
+            var isDay = !!(w && w.LPDaylight && w.LPDaylight.isDay);
+            btnTheme.textContent = isDay ? "🌙 夜晚" : "☀️ 白天";
+          }, 500);
+        } else {
+          btnTheme.textContent = day ? "🌙 夜晚" : "☀️ 白天";
+          if (day) {
+            var themeMeta = document.querySelector('meta[name="theme-color"]');
+            if (themeMeta) themeMeta.setAttribute("content", "#d4e8d0");
+          }
+          btnTheme.addEventListener("click", function () {
+            var params = new URLSearchParams(location.search);
+            if (params.get("theme") === "day") params.delete("theme");
+            else params.set("theme", "day");
+            location.search = params.toString(); /* 整页重载，两个画面同时换主题 */
+          });
+        }
 
         var remote = { 1: null, 2: null };
         /* 用 null 起手，第一帧就能把「未检测到手柄」如实渲染出来 */

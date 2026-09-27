@@ -22,7 +22,11 @@
 
   var link = document.createElement("a");
   link.id = "duo-entry-link";
-  link.href = "./duo.html" + (params.get("theme") === "day" ? "?theme=day" : "");
+  /* 当前星球与昼夜主题都带进双人模式，进来是什么样就是什么样 */
+  var carry = [];
+  if (params.get("theme") === "day") carry.push("theme=day");
+  if (params.get("planet") === "cyber") carry.push("planet=cyber");
+  link.href = "./duo.html" + (carry.length ? "?" + carry.join("&") : "");
   link.textContent = "👥 双人模式";
   link.title = "一块屏幕，两位玩家：分屏合作版（P1 键鼠 + P2 手柄）";
   link.setAttribute("aria-label", link.title);

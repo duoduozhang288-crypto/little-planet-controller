@@ -18,18 +18,27 @@
          DOMContentLoaded 之后插入则与原先静态 module 的 defer 行为完全一致。 -->
     <script>
       (function () {
-        var day = new URLSearchParams(location.search).get("theme") === "day";
-        var infix = day ? "day-" : "";
+        var q = new URLSearchParams(location.search);
+        var cyberPlanet = q.get("planet") === "cyber";
+        /* 赛博星球自带运行时昼夜（integration/daylight-mode.js），
+           ?theme 的资源副本切换只在原版星球生效 */
+        var day = q.get("theme") === "day" && !cyberPlanet;
+        /* 游戏本体按星球选副本：cyber 版与官方版只差一行场景钩子
+           （window.__LP_SCENE__/__LP_WORLD__，集成层靠它拿场景），
+           官方原文件一行未动。 */
+        var module = cyberPlanet ? "index-cyber-CS6g4Xtd.js"
+                   : day        ? "index-day-CS6g4Xtd.js"
+                   :              "index-CS6g4Xtd.js";
         var css = document.createElement("link");
         css.rel = "stylesheet";
         css.crossOrigin = "anonymous";
-        css.href = "./assets/index-" + infix + "CundtmH4.css";
+        css.href = "./assets/" + (day ? "index-day-" : "index-") + "CundtmH4.css";
         document.head.appendChild(css);
         function boot() {
           var s = document.createElement("script");
           s.type = "module";
           s.crossOrigin = "anonymous";
-          s.src = "./assets/index-" + infix + "CS6g4Xtd.js";
+          s.src = "./assets/" + module;
           document.head.appendChild(s);
         }
         if (document.readyState === "loading") {
@@ -37,6 +46,19 @@
         } else {
           boot();
         }
+      })();
+    </script>
+    <!-- 星球选择：?planet=cyber 时加载「赛博星球」集成层（57MB GLB 高精度模型
+         + 运行时昼夜切换）。两个脚本都是经典脚本、自带轮询等待游戏场景，
+         动态插入时机安全。不传参数时什么都不加载，原版星球零影响。 -->
+    <script>
+      (function () {
+        if (new URLSearchParams(location.search).get("planet") !== "cyber") return;
+        ["./integration/cyber-planet.js", "./integration/daylight-mode.js"].forEach(function (src) {
+          var s = document.createElement("script");
+          s.src = src;
+          document.head.appendChild(s);
+        });
       })();
     </script>
     <link rel="modulepreload" crossorigin href="./assets/three-gtj_l2uB.js">
@@ -82,5 +104,7 @@
     <script src="./bridge/duo-entry.js"></script>
     <!-- 6) 昼夜切换：右上角浮动按钮（分屏座位里不显示，切时间由宿主页统一做） -->
     <script src="./bridge/day-night.js"></script>
+    <!-- 7) 星球切换：原版星球 ↔ 赛博星球（GLB 高精度模型），整页换 ?planet 参数 -->
+    <script src="./bridge/planet-switch.js"></script>
   </body>
 </html>
